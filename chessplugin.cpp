@@ -75,7 +75,6 @@ void chessPlugin::processEvent ( Event &event )
 	}
 	else if (command == QString("starting"))
 	{
-		m_plugin_system->sendCustomMessage(from, "starting chess, I go first :)", true);
 		startGame(fromJid, true, from);
 	}
 	else if (command == QString("cancel"))
