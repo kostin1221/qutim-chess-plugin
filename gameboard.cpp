@@ -731,6 +731,7 @@ GameBoard::GameBoard(QWidget *parent, const char *name)
 	Qt::WDestructiveClose)
 {
 
+	setAttribute(Qt::WA_DeleteOnClose, true);
 	gt = NOGAME;
 	setCursor(QCursor(Qt::WaitCursor));
 	setIcon(QPixmap((const char **)white_knight));
@@ -801,8 +802,8 @@ GameBoard::GameBoard(QWidget *parent, const char *name)
 
 GameBoard::~GameBoard()
 {
-
-	protocol->sendQuit();
+	if(gt != NOGAME)
+	    protocol->sendQuit();
 	delete tmr;
 	delete tmr2;
 	delete hb;
@@ -963,7 +964,6 @@ void GameBoard::sockRead(const QString& data)
 void
 GameBoard::sockClosed()
 {
-
 	close();
 }
 

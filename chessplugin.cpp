@@ -37,6 +37,8 @@ bool chessPlugin::init ( PluginSystemInterface *plugin_system )
     m_item_menu = plugin_system->registerEventHandler("Core/ContactList/ContactContext", this);
     m_plugin_system->registerContactMenuAction(menuaction, this);
 
+    game_=0;
+
     return true;
 }
 
@@ -51,16 +53,23 @@ void chessPlugin::processEvent ( Event &event )
 	if (!message.startsWith("/chess "))
 		    return;
 
-	QString command = QString(message);
-	command.remove(0,7);
-	qDebug() << (qPrintable(QString("chess command string %1").arg(command)));
 	TreeModelItem from = event.at<TreeModelItem>(0);
 	QString fromJid = from.m_item_name;
 	bool &b = event.at<bool>(2);
 	b = true;
 
+	if (game_ && fromJid != playingWith_)
+	{
+		m_plugin_system->sendCustomMessage(from, QString("/chess cancel Already playing chess, sorry"), true);
+		return;
+	}
+
+	QString command = QString(message);
+	command.remove(0,7);
+
 	if (command == QString("start"))
 	{
+		if (game_) return;
 		int ret = QMessageBox::question(0, tr("Qutim chess plugin"),
 				fromJid + tr(" invites you to play chess.\n"
 				   "Accept?"),
@@ -70,17 +79,23 @@ void chessPlugin::processEvent ( Event &event )
 		    m_plugin_system->sendCustomMessage(from, "/chess accept", true);
 		    startGame(fromJid, false, from);
 		} else {
-		    m_plugin_system->sendCustomMessage(from, "/chess cancel", true);
+		    m_plugin_system->sendCustomMessage(from, "/chess cancel Manualy cancel", true);
 		}
 	}
 	else if (command == QString("accept"))
 	{
+		if (game_) return;
 		startGame(fromJid, true, from);
 	}
-	else if (command == QString("cancel"))
+	else if (command.startsWith("cancel"))
 	{
+	    QString reason;
+	    reason = QString(command);
+	    reason.remove(0, 7);
+	    if (!reason.isEmpty())
+		reason = tr(",\nwith reason: ") + reason;
 	    QMessageBox::information(0, tr("Qutim chess plugin"),
-				fromJid + tr(" don't accept your invite to play chess."),
+				fromJid + tr(" don't accept your invite to play chess") + reason,
 				QMessageBox::Yes);
 	}
 	else if (!game_)

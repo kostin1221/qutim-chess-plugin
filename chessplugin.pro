@@ -2,7 +2,7 @@ TARGET = chessplugin
 TEMPLATE = lib
 QT += qt3support 
 INCLUDEPATH += /usr/include ../../include /home/dimon/qutim/include
-CONFIG += qt plugin
+CONFIG += plugin
 
 # Input
 HEADERS += gameboard.h \
