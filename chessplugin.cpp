@@ -126,18 +126,19 @@ void chessPlugin::startGame(const QString& jid, bool meFirst, const TreeModelIte
 	if (meFirst)
 	{
 		GameBoard::GameType type=GameBoard::WHITE;
-		game_ = new GameBoard(type, jid, NULL, tr("Qutim chess plugin %1").arg(playingWith_));
+		game_ = new GameBoard(type, jid, NULL);
 	} else {
-		game_ = new GameBoard(NULL, tr("Qutim chess plugin %1").arg(playingWith_));
+		game_ = new GameBoard(jid, NULL);
 	}
 
 	connect(game_, SIGNAL(sendData(const QString&)), SLOT(sendData(const QString &)));
+	connect(game_, SIGNAL(destroyed()), SLOT(stopGame()));
 	game_->show();
  }
 
 void chessPlugin::stopGame()
 {
-	delete game_;
+	//delete game_;
 	game_=0;
 }
 

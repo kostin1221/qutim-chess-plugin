@@ -20,7 +20,6 @@
 #include <qpixmap.h>
 #include <q3pointarray.h>
 #include <qdialog.h>
-#include <q3groupbox.h>
 #include <qlineedit.h>
 #include <q3listbox.h>
 #include <qtimer.h>
@@ -30,7 +29,10 @@
 #include <QResizeEvent>
 #include <QFocusEvent>
 #include <QMouseEvent>
+#include <QGroupBox>
 #include <stdlib.h>
+
+#include "ui_gameboard.h"
 
 #define	MAX(a, b)	(((a) > (b))?(a):(b))
 #define	SEP		' '
@@ -74,7 +76,7 @@ public:
 
 	GameBoard(GameType, const QString &, QWidget *parent = NULL,
 		const char *name = NULL);
-	GameBoard(QWidget *parent = NULL, const char *name = NULL);
+	GameBoard(const QString &h, QWidget *parent = NULL, const char *name = NULL);
 	~GameBoard();
 
 	void		saveImage();
@@ -90,7 +92,7 @@ private:
 	GameType	gt;
 	FigureType	*map;
 	QString		my_stat, hst;
-	Q3GroupBox	*box, *hist;
+	QGroupBox	*box, *hist;
 	Q3ListBox	*lst, *hw, *hb;
 	QLineEdit	*edt;
 	QTimer		*tmr, *tmr2;

@@ -655,11 +655,11 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 
 	gt = g; hst = h;
 	setCursor(QCursor(Qt::WaitCursor));
+	str = "Qutim chess plugin: ";
 	if (gt == WHITE)
-		str = tr("White");
+		str += tr("White game with ");
 	else if (gt == BLACK)
-		str = tr("Black");
-	str += ' ' + tr("game with") + ' ';
+		str += tr("Black game with ");
 	setCaption(str + hst);
 	setIcon(QPixmap((const char **)white_knight));
 	map = new FigureType[64];
@@ -668,7 +668,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	drw = new Drawer(map, &gt, this);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
-	box = new Q3GroupBox(tr("Game chat"), this);
+	box = new QGroupBox(tr("Game chat"), this);
 	lst = new Q3ListBox(box);
 	lst->setFocusPolicy(Qt::NoFocus);
 	lst->setVScrollBarMode(Q3ScrollView::AlwaysOff);
@@ -676,7 +676,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	edt = new QLineEdit(box);
 	edt->setEnabled(FALSE);
 	setFocusProxy(edt);
-	hist = new Q3GroupBox(tr("History"), this);
+	hist = new QGroupBox(tr("History"), this);
 	hist->setAlignment(Qt::AlignHCenter);
 	hist->setFocusPolicy(Qt::NoFocus);
 	hw = new Q3ListBox(hist);
@@ -687,7 +687,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	hb->setPaletteBackgroundColor(cb);
 	//tmr = new QTimer(this);
 	//sock_tout = SOCK_WAIT;
-	my_stat = tr("Looking up the host") + ' ' + hst + "...";
+	my_stat = "Looking up the host" + ' ' + hst + "...";
 	/*QObject::connect(sock, SIGNAL(hostFound()),
 		this, SLOT(showHostFound()));
 	QObject::connect(sock, SIGNAL(connected()),
@@ -710,11 +710,8 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	QObject::connect(edt, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
 
-	resize(XSize, YSize);
-	setMinimumSize(size());
-	setMaximumSize(size());
-	//sock->connectToHost(hst, GAME_PORT);
-	//tmr->start(1000);
+	setFixedHeight(YSize);
+	setFixedWidth(XSize);
 
 	//hackyhackhack
 	tmr = new QTimer(this);
@@ -726,11 +723,11 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	qDebug("GameBoard inited, type 1");
 }
 
-GameBoard::GameBoard(QWidget *parent, const char *name)
+GameBoard::GameBoard(const QString &h, QWidget *parent, const char *name)
 	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase |
 	Qt::WDestructiveClose)
 {
-
+	hst = h;
 	setAttribute(Qt::WA_DeleteOnClose, true);
 	gt = NOGAME;
 	setCursor(QCursor(Qt::WaitCursor));
@@ -743,14 +740,14 @@ GameBoard::GameBoard(QWidget *parent, const char *name)
 	drw = new Drawer(map, &gt, this);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
-	box = new Q3GroupBox(tr("Game chat"), this);
+	box = new QGroupBox(tr("Game chat"), this);
 	lst = new Q3ListBox(box);
 	lst->setFocusPolicy(Qt::NoFocus);
 	lst->setVScrollBarMode(Q3ScrollView::AlwaysOff);
 	lst->setSelectionMode(Q3ListBox::NoSelection);
 	edt = new QLineEdit(box);
 	setFocusProxy(edt);
-	hist = new Q3GroupBox(tr("History"), this);
+	hist = new QGroupBox(tr("History"), this);
 	hist->setAlignment(Qt::AlignHCenter);
 	hist->setFocusPolicy(Qt::NoFocus);
 	hw = new Q3ListBox(hist);
@@ -760,19 +757,7 @@ GameBoard::GameBoard(QWidget *parent, const char *name)
 	hb->setSelectionMode(Q3ListBox::NoSelection);
 	hb->setPaletteBackgroundColor(cb);
 	
-	//sock_tout = SOCK_WAIT;
-	my_stat = tr("Accepted a new connection");
-	/*QObject::connect(sock, SIGNAL(hostFound()),
-		this, SLOT(showHostFound()));
-	QObject::connect(sock, SIGNAL(connected()),
-		this, SLOT(sockConnected()));
-	QObject::connect(sock, SIGNAL(readyRead()),
-		this, SLOT(sockRead()));
-	QObject::connect(sock, SIGNAL(connectionClosed()),
-		this, SLOT(sockClosed()));
-	QObject::connect(sock, SIGNAL(error(int)),
-		this, SLOT(sockError(int)));*/
-		
+	my_stat = tr("Accepted a new connection");		
 	
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
@@ -783,10 +768,8 @@ GameBoard::GameBoard(QWidget *parent, const char *name)
 		this, SLOT(gameover(int)));
 	QObject::connect(edt, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
-	
-	resize(XSize, YSize);
-	setMinimumSize(size());
-	setMaximumSize(size());
+	setFixedHeight(YSize);
+	setFixedWidth(XSize);
 	
 
 	//hackyhackhack
@@ -837,8 +820,8 @@ GameBoard::resizeEvent(QResizeEvent *e)
 	hist->move(drw->x() + drw->width(), drw->y());
 	hist->resize(w - hist->x(), box->y());
 	hw->move(2, QFontMetrics(hist->font()).lineSpacing());
-	hw->resize((hist->width() - hw->x()) / 2,
-		hist->height() - hw->y() - 2);
+	hw->resize((hist->width() - hw->x()-30) / 2,
+		hist->height() - hw->y() - 20);
 	hb->move(hw->x() + hw->width(), hw->y());
 	hb->resize(hw->size());
 }
@@ -1031,10 +1014,8 @@ GameBoard::parseString(const QString &str)
 	}
 }
 
-
 void GameBoard::sendMove(const QString &str)
 {
-
 	protocol->sendMove(str);
 	emit sendData(str);
 	drw->setEnabled(FALSE);
@@ -1048,16 +1029,16 @@ void GameBoard::sendMove(const QString &str)
 
 void GameBoard::closeEvent(QCloseEvent *e)
 {
-	int	res;
-
 	if (gt != NOGAME) {
-		res = QMessageBox::question(this, tr("End the game"),
+		int res = QMessageBox::question(this, tr("End the game"),
 			tr("Want you to end the game?\nYou will lose it"),
-			tr("Yes, end"), tr("No, continue"), QString::null, 1);
-		if (res == 0)
-			QWidget::closeEvent(e);
+			QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+		if (res == QMessageBox::Yes){
+		    e->accept();
+		} else {e->ignore();
+		qDebug() << "ignore";}
 	} else
-		QWidget::closeEvent(e);
+		e->accept();
 }
 
 
@@ -1635,10 +1616,12 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
 		if (mirror && (res & 0x10)) {
 			kk = TRUE;
 		} else if (res & 0x20) {
+		    qDebug() << "gameover(2);";
 			repaint(FALSE);
 			emit gameover(2);
 			return;
 		} else if (res & 0x40) {
+		    qDebug() << "gameover(3);";
 			repaint(FALSE);
 			emit gameover(3);
 			return;

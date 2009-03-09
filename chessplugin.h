@@ -54,7 +54,6 @@ private:
     QString playingWith_;
 
     void startGame(const QString& jid, bool meFirst, const TreeModelItem item);
-    void stopGame();
 
     TreeModelItem m_with;
     TreeModelItem eventitem;
@@ -63,6 +62,7 @@ private slots:
     void sendData(const QString& data);
     void receiveData(const QString& data);
     void actionStart();
+    void stopGame();
 };
 
 #endif
