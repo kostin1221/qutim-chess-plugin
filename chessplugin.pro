@@ -6,8 +6,6 @@ CONFIG += qt plugin
 
 # Input
 HEADERS += gameboard.h \
-           gamesocket.h \
-           mainwindow.h \
            xpm/black_bishop.xpm \
            xpm/black_castle.xpm \
            xpm/black_king.xpm \
@@ -25,7 +23,7 @@ HEADERS += gameboard.h \
            xpm/new_game.xpm \
 	   chessplugin.h
 
-SOURCES += gameboard.cpp gamesocket.cpp mainwindow.cpp
+SOURCES += gameboard.cpp
 
 SOURCES += chessplugin.cpp
 

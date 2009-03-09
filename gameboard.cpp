@@ -30,7 +30,6 @@
 #include <stdlib.h>
 
 #include "gameboard.h"
-#include "gamesocket.h"
 
 #include "xpm/black_bishop.xpm"
 #include "xpm/black_castle.xpm"
@@ -666,7 +665,6 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	map = new FigureType[64];
 	initMap();
 
-	sock = new Q3Socket(this);
 	drw = new Drawer(map, &gt, this);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
@@ -711,7 +709,6 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 		this, SLOT(gameover(int)));
 	QObject::connect(edt, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
-	//QObject::connect(tmr, SIGNAL(timeout()), this, SLOT(sockTest()));
 
 	resize(XSize, YSize);
 	setMinimumSize(size());
@@ -729,7 +726,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	qDebug("GameBoard inited, type 1");
 }
 
-GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
+GameBoard::GameBoard(QWidget *parent, const char *name)
 	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase |
 	Qt::WDestructiveClose)
 {
@@ -742,7 +739,6 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 
 	protocol = new GameProtocol();
 	connect(protocol,SIGNAL(sendData(const QString&)), this, SIGNAL(sendData(const QString&)));
-	sock = new Q3Socket(this);
 	drw = new Drawer(map, &gt, this);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
@@ -763,7 +759,6 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 	hb->setSelectionMode(Q3ListBox::NoSelection);
 	hb->setPaletteBackgroundColor(cb);
 	
-	//sock->setSocket(sfd);
 	//sock_tout = SOCK_WAIT;
 	my_stat = tr("Accepted a new connection");
 	/*QObject::connect(sock, SIGNAL(hostFound()),
@@ -807,7 +802,7 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 GameBoard::~GameBoard()
 {
 
-	protocol->sendQuit(sock);
+	protocol->sendQuit();
 	delete tmr;
 	delete tmr2;
 	delete hb;
@@ -817,7 +812,6 @@ GameBoard::~GameBoard()
 	delete lst;
 	delete box;
 	delete drw;
-	delete sock;
 	delete map;
 	delete protocol;
 }
@@ -949,7 +943,7 @@ GameBoard::sockConnected()
 	tmr2->stop();
 	my_stat = tr("Connected to the host");
 	emit showStatus(my_stat);
-	protocol->setGameType(sock, gt);
+	protocol->setGameType(gt);
 	edt->setEnabled(TRUE);
 	qDebug("sockConnected");
 }
@@ -972,18 +966,6 @@ GameBoard::sockClosed()
 
 	close();
 }
-
-
-void
-GameBoard::sockError(int err)
-{
-	QString	e;
-
-	QMessageBox::critical(this, tr("Socket Error..."),
-		tr("You have a socket error number") + ' ' +
-		QString::number(err));
-}
-
 
 void
 GameBoard::parseString(const QString &str)
@@ -1015,13 +997,9 @@ GameBoard::parseString(const QString &str)
 			}
 			s += ' ' + tr("game from") + ' ';
 			my_stat = tr("Accepted the") + ' ' + s;
-			hst = sock->peerName();
-			if (hst.isEmpty())
-				hst = sock->peerAddress().toString() + ':' +
-					QString::number(sock->peerPort());
 			initMap();
 			drw->repaint(TRUE);
-			protocol->acceptGame(sock);
+			protocol->acceptGame();
 			setCaption(s + hst);
 			my_stat += hst;
 			emit showStatus(my_stat);
@@ -1057,7 +1035,7 @@ GameBoard::parseString(const QString &str)
 void GameBoard::sendMove(const QString &str)
 {
 
-	protocol->sendMove(sock, str);
+	protocol->sendMove(str);
 	emit sendData(str);
 	drw->setEnabled(FALSE);
 	setCursor(QCursor(Qt::WaitCursor));
@@ -1091,7 +1069,7 @@ GameBoard::sendText()
 	s = edt->text().utf8();
 	if (!s.isEmpty()) {
 		updateChat(s);
-		protocol->sendText(sock, s.ascii());
+		protocol->sendText(s.ascii());
 	}
 	edt->clear();
 }
@@ -1210,32 +1188,10 @@ GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
 			id = -1;
 	}
 	if (id != -1) {
-		protocol->sendFigure(sock, coo, id);
+		protocol->sendFigure(coo, id);
 		updateHistory(id, FALSE);
 	}
 }
-
-
-void
-GameBoard::sockTest()
-{
-
-	--sock_tout;
-	if (sock_tout < 0) {
-		tmr->stop();
-		HAXEP:
-		gt = NOGAME;
-		sockClosed();
-	} else if ((sock->state() == QAbstractSocket::HostLookupState) &&
-		(sock_tout + 60 < SOCK_WAIT)) {
-		tmr->stop();
-		QMessageBox::critical(this, tr("Lookup Error"),
-			tr("The host") + ' ' + hst + ' ' + tr("not found."));
-		goto HAXEP;
-	}
-
-}
-
 
 void
 GameBoard::saveImage()
@@ -1267,12 +1223,12 @@ GameBoard::gameover(int type)
 			tr("You scored the game") + s, yes, no) == 0);
 	} else if (type == 2) {
 		updateHistory(GAMEOVER_TXT, FALSE);
-		protocol->sendGameover(sock, "MATE");
+		protocol->sendGameover("MATE");
 		save = (QMessageBox::question(this, go,
 			tr("You have a mate.\nYou lost the game.") + s,
 			yes, no) == 0);
 	} else if (type == 3) {
-		protocol->sendGameover(sock, "STALEMATE");
+		protocol->sendGameover("STALEMATE");
 		save = (QMessageBox::question(this, go,
 			tr("You have a stalemate") + s, yes, no) == 0);
 	}
@@ -1921,7 +1877,7 @@ FigureDialog::mousePressEvent(QMouseEvent *e)
 //-----------------------------------------------------------------------------
 
 void
-GameProtocol::send(Q3Socket *sock, const QString &dat)
+GameProtocol::send(const QString &dat)
 {
 	qDebug() << (qPrintable(QString("GameProtocol::send(%1)").arg(dat)));
 	emit sendData(dat);
@@ -1929,7 +1885,7 @@ GameProtocol::send(Q3Socket *sock, const QString &dat)
 
 
 void
-GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
+GameProtocol::setGameType(GameBoard::GameType gt)
 {
 	QString		d("GAME");
 
@@ -1940,53 +1896,53 @@ GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
 		d += "BLACK";
 	else
 		d += "NOGAME";
-	send(sock, d);
+	send(d);
 }
 
 
 void
-GameProtocol::acceptGame(Q3Socket *sock)
+GameProtocol::acceptGame()
 {
 	QString		d("GAME");
 
 	d += SEP;
 	d += "ACCEPT";
-	send(sock, d);
+	send(d);
 }
 
 
 void
-GameProtocol::sendMove(Q3Socket *sock, const QString &coo)
+GameProtocol::sendMove(const QString &coo)
 {
 	QString		d("MOVE");
 
 	d += SEP;
 	d += coo;
-	send(sock, d);
+	send(d);
 }
 
 
 void
-GameProtocol::sendQuit(Q3Socket *sock)
+GameProtocol::sendQuit()
 {
 
-	send(sock, "QUIT");
+	send("QUIT");
 }
 
 
 void
-GameProtocol::sendText(Q3Socket *sock, const QString &txt)
+GameProtocol::sendText(const QString &txt)
 {
 	QString		d("CHAT");
 
 	d += SEP;
 	d += txt;
-	send(sock, d);
+	send(d);
 }
 
 
 void
-GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
+GameProtocol::sendFigure(const QString &coo, int id)
 {
 	QString		d("FIGURE");
 
@@ -1994,17 +1950,17 @@ GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
 	d += coo;
 	d += SEP;
 	d += QString::number(id);
-	send(sock, d);
+	send(d);
 }
 
 
 void
-GameProtocol::sendGameover(Q3Socket *sock, const QString &got)
+GameProtocol::sendGameover(const QString &got)
 {
 	QString		d("GAME");
 qDebug() << "game over!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 	d += SEP;
 	d += got;
-	send(sock, d);
+	send(d);
 }
 

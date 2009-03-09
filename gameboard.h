@@ -20,7 +20,6 @@
 #include <qpixmap.h>
 #include <q3pointarray.h>
 #include <qdialog.h>
-#include <q3socket.h>
 #include <q3groupbox.h>
 #include <qlineedit.h>
 #include <q3listbox.h>
@@ -75,7 +74,7 @@ public:
 
 	GameBoard(GameType, const QString &, QWidget *parent = NULL,
 		const char *name = NULL);
-	GameBoard(int, QWidget *parent = NULL, const char *name = NULL);
+	GameBoard(QWidget *parent = NULL, const char *name = NULL);
 	~GameBoard();
 
 	void		saveImage();
@@ -90,8 +89,7 @@ private:
 	Drawer		*drw;
 	GameType	gt;
 	FigureType	*map;
-	QString		hst, my_stat;
-	Q3Socket		*sock;
+	QString		my_stat, hst;
 	Q3GroupBox	*box, *hist;
 	Q3ListBox	*lst, *hw, *hb;
 	QLineEdit	*edt;
@@ -118,8 +116,6 @@ private slots:
 	void	sendMove(const QString&);
 	void	sendText();
 	void	sendFigure(const QString&, GameBoard::FigureType);
-	void	sockTest();
-	void	sockError(int);
 	void	gameover(int);
 
 signals:
@@ -248,14 +244,14 @@ class GameProtocol:public QDialog
 {
 	Q_OBJECT
 public:
-	void	send(Q3Socket *, const QString&);
-	void	setGameType(Q3Socket *, GameBoard::GameType);
-	void	acceptGame(Q3Socket *);
-	void	sendMove(Q3Socket *, const QString&);
-	void	sendQuit(Q3Socket *);
-	void	sendText(Q3Socket *, const QString&);
-	void	sendFigure(Q3Socket *, const QString&, int);
-	void	sendGameover(Q3Socket *, const QString&);
+	void	send(const QString&);
+	void	setGameType(GameBoard::GameType);
+	void	acceptGame();
+	void	sendMove( const QString&);
+	void	sendQuit();
+	void	sendText(const QString&);
+	void	sendFigure(const QString&, int);
+	void	sendGameover(const QString&);
 signals:
 	void sendData(const QString& data);
 };

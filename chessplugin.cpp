@@ -48,11 +48,11 @@ void chessPlugin::processEvent ( Event &event )
 
     if ( event.id == m_event_receive) {
 	QString &message = event.at<QString>(1);
-	if (!message.startsWith("chess"))
+	if (!message.startsWith("/chess "))
 		    return;
 
 	QString command = QString(message);
-	command.remove(0,6);
+	command.remove(0,7);
 	qDebug() << (qPrintable(QString("chess command string %1").arg(command)));
 	TreeModelItem from = event.at<TreeModelItem>(0);
 	QString fromJid = from.m_item_name;
@@ -67,13 +67,13 @@ void chessPlugin::processEvent ( Event &event )
 				QMessageBox::Yes | QMessageBox::No);
 		if ( ret == QMessageBox::Yes )
 		{
-		    m_plugin_system->sendCustomMessage(from, "chess starting", true);
+		    m_plugin_system->sendCustomMessage(from, "/chess accept", true);
 		    startGame(fromJid, false, from);
 		} else {
-		    m_plugin_system->sendCustomMessage(from, "chess cancel", true);
+		    m_plugin_system->sendCustomMessage(from, "/chess cancel", true);
 		}
 	}
-	else if (command == QString("starting"))
+	else if (command == QString("accept"))
 	{
 		startGame(fromJid, true, from);
 	}
@@ -99,7 +99,7 @@ void chessPlugin::processEvent ( Event &event )
 
 void chessPlugin::actionStart()
 {
-     m_plugin_system->sendCustomMessage(eventitem, "chess start", true);
+     m_plugin_system->sendCustomMessage(eventitem, "/chess start", true);
 }
 
 void chessPlugin::startGame(const QString& jid, bool meFirst, const TreeModelItem item)
@@ -111,19 +111,19 @@ void chessPlugin::startGame(const QString& jid, bool meFirst, const TreeModelIte
 	if (meFirst)
 	{
 		GameBoard::GameType type=GameBoard::WHITE;
-		game_ = new GameBoard(type, jid, NULL);
+		game_ = new GameBoard(type, jid, NULL, tr("Qutim chess plugin %1").arg(playingWith_));
 	} else {
-		game_ = new GameBoard(1);
+		game_ = new GameBoard(NULL, tr("Qutim chess plugin %1").arg(playingWith_));
 	}
 
-	connect(game_, SIGNAL(sendData(const QString&)), this, SLOT(sendData(const QString &)));
+	connect(game_, SIGNAL(sendData(const QString&)), SLOT(sendData(const QString &)));
 	game_->show();
  }
 
 void chessPlugin::stopGame()
 {
 	delete game_;
-	game_=NULL;
+	game_=0;
 }
 
 void chessPlugin::sendData(const QString& data)
@@ -132,7 +132,7 @@ void chessPlugin::sendData(const QString& data)
 	if (!game_)
 		return;
 	QString reply;
-	reply=QString("chess command %1").arg(data);
+	reply=QString("/chess command %1").arg(data);
 	qDebug() << (qPrintable(QString("sendingData: %1").arg(reply)));
 	m_plugin_system->sendCustomMessage(m_with, reply, true);
 }
