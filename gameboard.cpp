@@ -21,8 +21,6 @@
 //Added by qt3to4:
 #include <Q3PointArray>
 #include <QPixmap>
-#include <QResizeEvent>
-#include <QFocusEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QCloseEvent>
@@ -656,7 +654,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 
 	gt = g; hst = h;
 	setCursor(QCursor(Qt::WaitCursor));
-	str = "Qutim chess plugin: ";
+	str = caption + ": ";
 	if (gt == WHITE)
 		str += tr("White game with ");
 	else if (gt == BLACK)
@@ -675,8 +673,6 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	drw->setFocusPolicy(Qt::NoFocus);
 	gmb->horizontalLayout_2->insertWidget(0, drw, 1);
 
-	my_stat = "Looking up the host" + ' ' + hst + "...";	
-		
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
 	QObject::connect(drw, SIGNAL(newFigure(const QString&,
@@ -723,8 +719,6 @@ GameBoard::GameBoard(const QString &h, QWidget *parent, const char *name)
 	gmb->setupUi(this);
 	gmb->horizontalLayout_2->insertWidget(0, drw, 1);
 
-	my_stat = tr("Accepted a new connection");		
-	
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
 	QObject::connect(drw, SIGNAL(newFigure(const QString&,
@@ -759,28 +753,6 @@ GameBoard::~GameBoard()
 	delete map;
 	delete protocol;
 }
-
-
-void
-GameBoard::resizeEvent(QResizeEvent *e)
-{
-	QFontMetrics	fm(font());
-	int		w = e->size().width(),
-			h = e->size().height(),
-			fh = fm.lineSpacing() + 4;
-
-	QWidget::resizeEvent(e);
-}
-
-
-void
-GameBoard::focusInEvent(QFocusEvent *e)
-{
-
-	QWidget::focusInEvent(e);
-	emit showStatus(my_stat);
-}
-
 
 void
 GameBoard::initMap()
@@ -861,9 +833,6 @@ void
 GameBoard::showHostFound()
 {
 	tmr->stop();
-	my_stat = tr("The host found");
-	emit showStatus(my_stat);
-	qDebug("showHostFound");
 }
 
 
@@ -871,10 +840,7 @@ void
 GameBoard::sockConnected()
 {
 	tmr2->stop();
-	my_stat = tr("Connected to the host");
-	emit showStatus(my_stat);
 	protocol->setGameType(gt);
-	qDebug("sockConnected");
 }
 
 void GameBoard::receiveData(const QString& data)
@@ -924,13 +890,10 @@ GameBoard::parseString(const QString &str)
 				setCursor(QCursor(Qt::ArrowCursor));
 			}
 			s += ' ' + tr("game from") + ' ';
-			my_stat = tr("Accepted the") + ' ' + s;
 			initMap();
 			drw->repaint(TRUE);
 			protocol->acceptGame();
 			setCaption(s + hst);
-			my_stat += hst;
-			emit showStatus(my_stat);
 		} else if (gt == WHITE) {
 			drw->setEnabled(TRUE);
 			setCursor(QCursor(Qt::ArrowCursor));
@@ -942,10 +905,11 @@ GameBoard::parseString(const QString &str)
 			updateHistory(s, TRUE);
 			drw->makeMove(s);
 			setCursor(QCursor(Qt::ArrowCursor));
-			my_stat = tr("Your move...");
-			emit showStatus(my_stat);
 		}
 	} else if (s == "quit") {
+		 QMessageBox::information(this, caption,
+				tr("Your opponent has closed the game"),
+				QMessageBox::Ok);
 		gt = NOGAME;
 		sockClosed();
 	} else if (s == "chat") {
@@ -967,8 +931,6 @@ void GameBoard::sendMove(const QString &str)
 	setCursor(QCursor(Qt::WaitCursor));
 	updateHistory(str, FALSE);
 	sock_tout = SOCK_WAIT;
-	my_stat = tr("Waiting a move...");
-	emit showStatus(my_stat);
 }
 
 

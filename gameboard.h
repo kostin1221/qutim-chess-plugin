@@ -41,6 +41,7 @@
 #define	SHORT_XCHG	"o-o"
 #define	SOCK_WAIT	900
 #define	GAMEOVER_TXT	"****"
+QString caption = tr("QutIM chess plugin");
 
 class GameBoard;
 class Drawer;
@@ -91,7 +92,7 @@ private:
 	Drawer		*drw;
 	GameType	gt;
 	FigureType	*map;
-	QString		my_stat, hst;
+	QString		hst;
 	QTimer		*tmr, *tmr2;
 	int		sock_tout;
 	GameProtocol* protocol;
@@ -104,9 +105,7 @@ private:
 	void	updateHistory(int, bool);
 
 protected:
-	void	resizeEvent(QResizeEvent *);
 	void	closeEvent(QCloseEvent *);
-	void	focusInEvent(QFocusEvent *);
 
 private slots:
 	void	showHostFound();
@@ -119,7 +118,6 @@ private slots:
 	void	gameover(int);
 
 signals:
-	void	showStatus(const QString&);
 	void sendData(const QString& data);
 };
 
