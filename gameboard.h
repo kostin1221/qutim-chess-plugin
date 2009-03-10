@@ -41,7 +41,6 @@
 #define	SHORT_XCHG	"o-o"
 #define	SOCK_WAIT	900
 #define	GAMEOVER_TXT	"****"
-QString caption = tr("QutIM chess plugin");
 
 class GameBoard;
 class Drawer;
@@ -83,7 +82,7 @@ public:
 	void		saveImage();
 
 	GameType	type()const{return (gt);}
-	QString		status()const{return (my_stat);}
+	QString caption;
 
 public slots:
 	void receiveData(const QString& data);

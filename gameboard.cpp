@@ -646,6 +646,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	const char *name)
 	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
 {
+	caption = tr("QutIM chess plugin");
 	setAttribute(Qt::WA_DeleteOnClose);
 	QString	str;
 
@@ -656,10 +657,10 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	setCursor(QCursor(Qt::WaitCursor));
 	str = caption + ": ";
 	if (gt == WHITE)
-		str += tr("White game with ");
+		str += tr("White game with");
 	else if (gt == BLACK)
-		str += tr("Black game with ");
-	setCaption(str + hst);
+		str += tr("Black game with");
+	setCaption(str + " " + hst);
 	setIcon(QPixmap((const char **)white_knight));
 	map = new FigureType[64];
 	initMap();
@@ -700,6 +701,7 @@ GameBoard::GameBoard(const QString &h, QWidget *parent, const char *name)
 	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase |
 	Qt::WDestructiveClose)
 {
+	caption = tr("QutIM chess plugin");
 	hst = h;
 	setAttribute(Qt::WA_DeleteOnClose, true);
 	gt = NOGAME;
@@ -882,18 +884,17 @@ GameBoard::parseString(const QString &str)
 		} else if (s != "accept") {
 			if (s == "white") {
 				gt = BLACK;
-				s = tr("White");
+				s = tr("White game from");
 			} else if (s == "black") {
 				gt = WHITE;
-				s = tr("Black");
+				s = tr("Black game from");
 				drw->setEnabled(TRUE);
 				setCursor(QCursor(Qt::ArrowCursor));
 			}
-			s += ' ' + tr("game from") + ' ';
 			initMap();
 			drw->repaint(TRUE);
 			protocol->acceptGame();
-			setCaption(s + hst);
+			setCaption(caption + ": " + s + " " + hst);
 		} else if (gt == WHITE) {
 			drw->setEnabled(TRUE);
 			setCursor(QCursor(Qt::ArrowCursor));
