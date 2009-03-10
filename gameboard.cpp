@@ -660,14 +660,13 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 		str += tr("White game with");
 	else if (gt == BLACK)
 		str += tr("Black game with");
-	setCaption(str + " " + hst);
 	setIcon(QPixmap((const char **)white_knight));
 	map = new FigureType[64];
 	initMap();
 
 	gmb = new Ui::gameboard();
 	gmb->setupUi(this);
-
+	setCaption(str + " " + hst + ". " + tr("Your turn."));
 	drw = new Drawer(this);
 	drw->setDrawer(map, &gt);
 	drw->setEnabled(FALSE);
@@ -894,7 +893,7 @@ GameBoard::parseString(const QString &str)
 			initMap();
 			drw->repaint(TRUE);
 			protocol->acceptGame();
-			setCaption(caption + ": " + s + " " + hst);
+			setCaption(caption + ": " + s + " " + hst + ". " + tr("Opponent turn.") );
 		} else if (gt == WHITE) {
 			drw->setEnabled(TRUE);
 			setCursor(QCursor(Qt::ArrowCursor));
@@ -906,6 +905,9 @@ GameBoard::parseString(const QString &str)
 			updateHistory(s, TRUE);
 			drw->makeMove(s);
 			setCursor(QCursor(Qt::ArrowCursor));
+			QString oldtitle = windowTitle();
+			oldtitle.remove(tr("Opponent turn."));
+			setWindowTitle(oldtitle + tr("Your turn."));
 		}
 	} else if (s == "quit") {
 		 QMessageBox::information(this, caption,
@@ -929,6 +931,9 @@ void GameBoard::sendMove(const QString &str)
 	protocol->sendMove(str);
 	emit sendData(str);
 	drw->setEnabled(FALSE);
+	QString oldtitle = windowTitle();
+	oldtitle.remove(tr("Your turn."));
+	setWindowTitle(oldtitle + "Opponent turn.");
 	setCursor(QCursor(Qt::WaitCursor));
 	updateHistory(str, FALSE);
 	sock_tout = SOCK_WAIT;
