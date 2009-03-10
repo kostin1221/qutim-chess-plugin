@@ -93,10 +93,10 @@ void chessPlugin::processEvent ( Event &event )
 	    reason = QString(command);
 	    reason.remove(0, 7);
 	    if (!reason.isEmpty())
-		reason = tr(",\nwith reason: ") + reason;
+		reason = tr(",\nwith reason: \"") + reason + "\"";
 	    QMessageBox::information(0, tr("Qutim chess plugin"),
-				fromJid + tr(" don't accept your invite to play chess") + reason,
-				QMessageBox::Yes);
+				fromJid + " " + tr("don't accept your invite to play chess") + reason,
+				QMessageBox::Ok);
 	}
 	else if (!game_)
 	{

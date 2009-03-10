@@ -46,7 +46,7 @@
 
 const int 	cell_size = 40,
 			XSize = 640,
-			YSize = 480;
+			YSize = 520;
 
 QColor	cb, cw;
 
@@ -161,8 +161,9 @@ int Figure::map2map(GameBoard::GameType gt, int x, int y, bool mirror)
 		else
 			n = (8 - y) * 8 + (x - 1);
 	else if (gt == GameBoard::BLACK)
-		if (mirror)
+		if (mirror){
 			n = (8 - y) * 8 + (x - 1);
+		}
 		else
 			n = (y - 1) * 8 + (8 - x);
 
@@ -665,40 +666,16 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	map = new FigureType[64];
 	initMap();
 
-	drw = new Drawer(map, &gt, this);
+	gmb = new Ui::gameboard();
+	gmb->setupUi(this);
+
+	drw = new Drawer(this);
+	drw->setDrawer(map, &gt);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
-	box = new QGroupBox(tr("Game chat"), this);
-	lst = new Q3ListBox(box);
-	lst->setFocusPolicy(Qt::NoFocus);
-	lst->setVScrollBarMode(Q3ScrollView::AlwaysOff);
-	lst->setSelectionMode(Q3ListBox::NoSelection);
-	edt = new QLineEdit(box);
-	edt->setEnabled(FALSE);
-	setFocusProxy(edt);
-	hist = new QGroupBox(tr("History"), this);
-	hist->setAlignment(Qt::AlignHCenter);
-	hist->setFocusPolicy(Qt::NoFocus);
-	hw = new Q3ListBox(hist);
-	hw->setSelectionMode(Q3ListBox::NoSelection);
-	hw->setPaletteBackgroundColor(cw);
-	hb = new Q3ListBox(hist);
-	hb->setSelectionMode(Q3ListBox::NoSelection);
-	hb->setPaletteBackgroundColor(cb);
-	//tmr = new QTimer(this);
-	//sock_tout = SOCK_WAIT;
-	my_stat = "Looking up the host" + ' ' + hst + "...";
-	/*QObject::connect(sock, SIGNAL(hostFound()),
-		this, SLOT(showHostFound()));
-	QObject::connect(sock, SIGNAL(connected()),
-		this, SLOT(sockConnected()));
-	QObject::connect(sock, SIGNAL(readyRead()),
-		this, SLOT(sockRead()));
-	QObject::connect(sock, SIGNAL(connectionClosed()),
-		this, SLOT(sockClosed()));
-	QObject::connect(sock, SIGNAL(error(int)),
-		this, SLOT(sockError(int)));*/
-	
+	gmb->horizontalLayout_2->insertWidget(0, drw, 1);
+
+	my_stat = "Looking up the host" + ' ' + hst + "...";	
 		
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
@@ -707,7 +684,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 		this, SLOT(sendFigure(const QString&, GameBoard::FigureType)));
 	QObject::connect(drw, SIGNAL(gameover(int)),
 		this, SLOT(gameover(int)));
-	QObject::connect(edt, SIGNAL(returnPressed()),
+	QObject::connect(gmb->msgEdit, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
 
 	setFixedHeight(YSize);
@@ -737,26 +714,15 @@ GameBoard::GameBoard(const QString &h, QWidget *parent, const char *name)
 
 	protocol = new GameProtocol();
 	connect(protocol,SIGNAL(sendData(const QString&)), this, SIGNAL(sendData(const QString&)));
-	drw = new Drawer(map, &gt, this);
+	drw = new Drawer(this);
+	drw->setDrawer(map, &gt);
 	drw->setEnabled(FALSE);
 	drw->setFocusPolicy(Qt::NoFocus);
-	box = new QGroupBox(tr("Game chat"), this);
-	lst = new Q3ListBox(box);
-	lst->setFocusPolicy(Qt::NoFocus);
-	lst->setVScrollBarMode(Q3ScrollView::AlwaysOff);
-	lst->setSelectionMode(Q3ListBox::NoSelection);
-	edt = new QLineEdit(box);
-	setFocusProxy(edt);
-	hist = new QGroupBox(tr("History"), this);
-	hist->setAlignment(Qt::AlignHCenter);
-	hist->setFocusPolicy(Qt::NoFocus);
-	hw = new Q3ListBox(hist);
-	hw->setSelectionMode(Q3ListBox::NoSelection);
-	hw->setPaletteBackgroundColor(cw);
-	hb = new Q3ListBox(hist);
-	hb->setSelectionMode(Q3ListBox::NoSelection);
-	hb->setPaletteBackgroundColor(cb);
 	
+	gmb = new Ui::gameboard();
+	gmb->setupUi(this);
+	gmb->horizontalLayout_2->insertWidget(0, drw, 1);
+
 	my_stat = tr("Accepted a new connection");		
 	
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
@@ -766,7 +732,7 @@ GameBoard::GameBoard(const QString &h, QWidget *parent, const char *name)
 		this, SLOT(sendFigure(const QString&, GameBoard::FigureType)));
 	QObject::connect(drw, SIGNAL(gameover(int)),
 		this, SLOT(gameover(int)));
-	QObject::connect(edt, SIGNAL(returnPressed()),
+	QObject::connect(gmb->msgEdit, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
 	setFixedHeight(YSize);
 	setFixedWidth(XSize);
@@ -789,12 +755,6 @@ GameBoard::~GameBoard()
 	    protocol->sendQuit();
 	delete tmr;
 	delete tmr2;
-	delete hb;
-	delete hw;
-	delete hist;
-	delete edt;
-	delete lst;
-	delete box;
 	delete drw;
 	delete map;
 	delete protocol;
@@ -810,20 +770,6 @@ GameBoard::resizeEvent(QResizeEvent *e)
 			fh = fm.lineSpacing() + 4;
 
 	QWidget::resizeEvent(e);
-	drw->move(0, 0);
-	box->move(drw->x(), drw->y() + drw->height());
-	box->resize(w, h - box->y());
-	edt->move(2, box->height() - fh - 2);
-	edt->resize(box->width() - edt->x() * 2, fh);
-	lst->move(edt->x(), fm.lineSpacing());
-	lst->resize(edt->width(), edt->y() - lst->y());
-	hist->move(drw->x() + drw->width(), drw->y());
-	hist->resize(w - hist->x(), box->y());
-	hw->move(2, QFontMetrics(hist->font()).lineSpacing());
-	hw->resize((hist->width() - hw->x()-30) / 2,
-		hist->height() - hw->y() - 20);
-	hb->move(hw->x() + hw->width(), hw->y());
-	hb->resize(hw->size());
 }
 
 
@@ -928,7 +874,6 @@ GameBoard::sockConnected()
 	my_stat = tr("Connected to the host");
 	emit showStatus(my_stat);
 	protocol->setGameType(gt);
-	edt->setEnabled(TRUE);
 	qDebug("sockConnected");
 }
 
@@ -1047,25 +992,19 @@ GameBoard::sendText()
 {
 	QString	s;
 
-	s = edt->text().utf8();
+	s = gmb->msgEdit->text();
 	if (!s.isEmpty()) {
 		updateChat(s);
-		protocol->sendText(s.ascii());
+		protocol->sendText(s);
 	}
-	edt->clear();
+	gmb->msgEdit->clear();
 }
 
 
 void
 GameBoard::updateChat(const QString &s)
 {
-	int	fh, h;
-
-	lst->insertItem(QString::fromUtf8(s.ascii()));
-	h = lst->height();
-	fh = QFontMetrics(lst->font()).lineSpacing();
-	if ((int)lst->count() * fh >= lst->visibleHeight())
-		lst->removeItem(0);
+	gmb->log->appendPlainText(s);
 }
 
 
@@ -1082,15 +1021,9 @@ GameBoard::updateHistory(const QString &st, bool t)
 	} else
 		s = st.left(2) + " - " + st.right(2);
 	if (t) {
-		if (gt == WHITE)
-			hb->insertItem(s);
-		else if (gt == BLACK)
-			hw->insertItem(s);
+		gmb->enemyMoveList->addItem(s);//hb
 	} else {
-		if (gt == WHITE)
-			hw->insertItem(s);
-		else if (gt == BLACK)
-			hb->insertItem(s);
+		gmb->myMoveList->addItem(s);
 	}
 }
 
@@ -1099,7 +1032,7 @@ void
 GameBoard::updateHistory(int id, bool t)
 {
 	QString	s("; "), s1;
-
+qDebug() << "GameBoard::updateHistory(int id, bool t)";
 	switch (id) {
 		case 3:
 			s += tr("B");
@@ -1116,27 +1049,15 @@ GameBoard::updateHistory(int id, bool t)
 		default:
 			s += tr("Error!");
 	}
+	QListWidgetItem *itm;
+
 	if (t) {
-		if (gt == WHITE) {
-			id = hb->count() - 1;
-			s1 = hb->text(id);
-			hb->changeItem(s1 + s, id);
-		} else if (gt == BLACK) {
-			id = hw->count() - 1;
-			s1 = hw->text(id);
-			hw->changeItem(s1 + s, id);
-		}
+		itm = gmb->enemyMoveList->item( gmb->enemyMoveList->count() - 1 );
 	} else {
-		if (gt == WHITE) {
-			id = hw->count() - 1;
-			s1 = hw->text(id);
-			hw->changeItem(s1 + s, id);
-		} else if (gt == BLACK) {
-			id = hb->count() - 1;
-			s1 = hb->text(id);
-			hb->changeItem(s1 + s, id);
-		}
+		itm = gmb->myMoveList->item( gmb->enemyMoveList->count() - 1 );
 	}
+	if(itm)
+		itm->setText(itm->text() + s);
 }
 
 
@@ -1220,9 +1141,13 @@ GameBoard::gameover(int type)
 
 //-----------------------------------------------------------------------------
 
-Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g,
-	QWidget *parent, const char *name)
+Drawer::Drawer(QWidget *parent, const char *name)
 	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
+{
+
+}
+
+void Drawer::setDrawer(GameBoard::FigureType *ft, GameBoard::GameType *g)
 {
 	QFontMetrics	fm(font());
 	int		i;
@@ -1237,7 +1162,10 @@ Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g,
 	hl = fm.lineSpacing() + 2;
 	setPaletteBackgroundColor(Qt::white);
 	i = MAX(cs + left_margin + top_margin, cs + top_margin + hl);
-	resize(i, i);
+	qDebug () << "SIZE:                         " << QString::number(i);
+	setFixedSize(i, i);
+	move(0,0);
+//	resize(i, i);
 	x_brd = i - cs - 6;
 	y_brd = 4;
 	tfx = tfy = -1;
@@ -1660,7 +1588,7 @@ Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
 
 	n1 = n2 = -1;
 	if ((fx == 1) && (fy == 1)) {
-		if ((tx == 4) && (ty == 1))
+		if ((tx == 4) && (ty == 1)){
 			if (mirror) {
 				n1 = Figure::map2map(*gt, 5, 1, FALSE);
 				n2 = Figure::map2map(*gt, 3, 1, FALSE);
@@ -1674,8 +1602,9 @@ Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
 				}
 				lcm = TRUE;
 			}
+		    }
 	} else if ((fx == 8) && (fy == 1)) {
-		if ((tx == 6) && (ty == 1))
+		if ((tx == 6) && (ty == 1)){
 			if (mirror) {
 				n1 = Figure::map2map(*gt, 5, 1, FALSE);
 				n2 = Figure::map2map(*gt, 7, 1, FALSE);
@@ -1689,6 +1618,7 @@ Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
 				}
 				rcm = TRUE;
 			}
+		}
 	}
 	if (n1 != n2) {
 		map[n2] = map[n1];
@@ -1722,7 +1652,7 @@ Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
 			}
 		}
 	} else if ((fx == 8) && (fy == 8)) {
-		if ((tx == 6) && (ty == 8))
+		if ((tx == 6) && (ty == 8)){
 			if (mirror) {
 				n1 = Figure::map2map(*gt, 5, 8, FALSE);
 				n2 = Figure::map2map(*gt, 7, 8, FALSE);
@@ -1735,6 +1665,7 @@ Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
 				}
 				lcm = TRUE;
 			}
+		  }
 	}
 	if (n1 != n2) {
 		map[n2] = map[n1];

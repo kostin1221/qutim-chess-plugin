@@ -29,7 +29,7 @@
 #include <QResizeEvent>
 #include <QFocusEvent>
 #include <QMouseEvent>
-#include <QGroupBox>
+#include <QListWidgetItem>
 #include <stdlib.h>
 
 #include "ui_gameboard.h"
@@ -92,12 +92,10 @@ private:
 	GameType	gt;
 	FigureType	*map;
 	QString		my_stat, hst;
-	QGroupBox	*box, *hist;
-	Q3ListBox	*lst, *hw, *hb;
-	QLineEdit	*edt;
 	QTimer		*tmr, *tmr2;
 	int		sock_tout;
 	GameProtocol* protocol;
+	Ui::gameboard* gmb;
 
 	void	initMap();
 	void	parseString(const QString&);
@@ -131,10 +129,10 @@ class Drawer:public QWidget
 {
 	Q_OBJECT
 public:
-	Drawer(GameBoard::FigureType *, GameBoard::GameType *,
-		QWidget *parent = NULL, const char *name = NULL);
+	Drawer(QWidget *parent = NULL, const char *name = NULL);
 	~Drawer();
 
+	void setDrawer(GameBoard::FigureType *, GameBoard::GameType *);
 	void	makeMove(const QString&);
 	void	newFigure(const QString&, int);
 
