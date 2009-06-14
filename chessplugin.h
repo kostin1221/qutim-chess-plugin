@@ -25,7 +25,7 @@ Thanks to Psi developers! Site: psi-im.org
 
 using namespace qutim_sdk_0_2;
 
-class chessPlugin : public QObject, SimplePluginInterface, EventHandler
+class chessPlugin : public QObject, DeprecatedSimplePluginInterface, EventHandler
 {
     Q_OBJECT
     Q_INTERFACES ( qutim_sdk_0_2::PluginInterface )
